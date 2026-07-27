@@ -1,0 +1,57 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      KSU_VERSION:
+        description: 'KernelSU version tag (e.g. v3.2.5)'
+        required: true
+        default: 'v3.2.5'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git make bc bison flex libssl-dev libelf-dev python3 zip
+
+      - name: Setup KernelSU
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s ${{ github.event.inputs.KSU_VERSION }}
+
+      - name: Download toolchain
+        run: |
+          mkdir -p ~/toolchain
+          git clone --depth=1 https://github.com/ZyCromerZ/Clang --single-branch ~/toolchain/clang
+
+      - name: Build kernel
+        run: |
+          export PATH="$HOME/toolchain/clang/bin:$PATH"
+          export ARCH=arm64
+          export SUBARCH=arm64
+          make O=out ARCH=arm64 ginkgo_defconfig
+          make -j$(nproc) O=out ARCH=arm64 \
+            CC=clang \
+            CLANG_TRIPLE=aarch64-linux-gnu- \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+
+      - name: Package AnyKernel3
+        run: |
+          git clone --depth=1 https://github.com/osm0sis/AnyKernel3 AnyKernel3
+          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          cd AnyKernel3
+          zip -r9 ../FloppyKernel-KSU-${{ github.event.inputs.KSU_VERSION }}.zip . -x '*.git*'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FloppyKernel-KSU-${{ github.event.inputs.KSU_VERSION }}
+          path: FloppyKernel-KSU-${{ github.event.inputs.KSU_VERSION }}.zip
