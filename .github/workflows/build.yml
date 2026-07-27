@@ -2,11 +2,6 @@ name: Build Kernel
 
 on:
   workflow_dispatch:
-    inputs:
-      KSU_VERSION:
-        description: 'KernelSU version tag (e.g. v3.2.5)'
-        required: true
-        default: 'v3.2.5'
 
 jobs:
   build:
@@ -21,17 +16,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y git make bc bison flex libssl-dev libelf-dev python3 zip gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
-
-      - name: Remove existing KSU
-        run: |
-          rm -rf drivers/kernelsu
-          sed -i '/kernelsu/d' drivers/Makefile
-          sed -i '/kernelsu/d' drivers/Kconfig
-          sed -i '/kernelsu/d' drivers/su_variants.Kconfig
-
-      - name: Setup KernelSU
-        run: |
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s ${{ github.event.inputs.KSU_VERSION }}
 
       - name: Download toolchain
         run: |
@@ -62,10 +46,10 @@ jobs:
           git clone --depth=1 https://github.com/osm0sis/AnyKernel3 AnyKernel3
           cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
           cd AnyKernel3
-          zip -r9 ../FloppyKernel-KSU-${{ github.event.inputs.KSU_VERSION }}.zip . -x '*.git*'
+          zip -r9 ../FloppyKernel-KSUN.zip . -x '*.git*'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FloppyKernel-KSU-${{ github.event.inputs.KSU_VERSION }}
-          path: FloppyKernel-KSU-${{ github.event.inputs.KSU_VERSION }}.zip
+          name: FloppyKernel-KSUN
+          path: FloppyKernel-KSUN.zip
