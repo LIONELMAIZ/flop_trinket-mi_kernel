@@ -21,12 +21,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y git make bc bison flex libssl-dev libelf-dev python3 zip
-- name: Setup KernelSU
+
+      - name: Setup KernelSU
         run: |
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s ${{ github.event.inputs.KSU_VERSION }}
           if [ ! -f "drivers/kernelsu/Kconfig" ]; then
             git submodule update --init --recursive
           fi
+
       - name: Download toolchain
         run: |
           mkdir -p ~/toolchain
