@@ -46,7 +46,7 @@ jobs:
           export PATH="$HOME/toolchain/clang/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=arm64
-          make O=out ARCH=arm64 ginkgo_defconfig
+          make O=out ARCH=arm64 ginkgo-stock_defconfig
           make -j$(nproc) O=out ARCH=arm64 \
             CC=clang \
             CLANG_TRIPLE=aarch64-linux-gnu- \
